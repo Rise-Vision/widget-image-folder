@@ -36,11 +36,11 @@ casper.test.begin("Image Folder Widget - e2e Testing", {
         test.comment("URLs");
         test.assertElementCount(".tp-revslider-mainul .tp-revslider-slidesli", 3, "Total number of slides");
         test.assertEquals(this.getElementAttribute(".tp-revslider-mainul .tp-revslider-slidesli:nth-child(1) .tp-bgimg", "src"),
-          "https://storage.googleapis.com/risemedialibrary-b428b4e8-c8b9-41d5-8a10-b4193c789443/Widgets%2Fapple.png", "First image URL");
+          "https://www.googleapis.com/storage/v1/b/risemedialibrary-b428b4e8-c8b9-41d5-8a10-b4193c789443/o/Widgets%2Fapple.png?alt=media", "First image URL");
         test.assertEquals(this.getElementAttribute(".tp-revslider-mainul .tp-revslider-slidesli:nth-child(2) .tp-bgimg", "src"),
-          "https://storage.googleapis.com/risemedialibrary-b428b4e8-c8b9-41d5-8a10-b4193c789443/Widgets%2Fduck.bmp", "Second image URL");
+          "https://www.googleapis.com/storage/v1/b/risemedialibrary-b428b4e8-c8b9-41d5-8a10-b4193c789443/o/Widgets%2Fduck.bmp?alt=media", "Second image URL");
         test.assertEquals(this.getElementAttribute(".tp-revslider-mainul .tp-revslider-slidesli:nth-child(3) .tp-bgimg", "src"),
-          "https://storage.googleapis.com/risemedialibrary-b428b4e8-c8b9-41d5-8a10-b4193c789443/Widgets%2Fmoon.jpg", "Third image URL");
+          "https://www.googleapis.com/storage/v1/b/risemedialibrary-b428b4e8-c8b9-41d5-8a10-b4193c789443/o/Widgets%2Fmoon.jpg?alt=media", "Third image URL");
 
         test.comment("Arrows");
         test.assertExists(".tp-leftarrow", "Left arrow");
@@ -53,6 +53,7 @@ casper.test.begin("Image Folder Widget - e2e Testing", {
         // Wait for slider to be rebuilt with only 2 slides.
         casper.waitFor(function waitForUI() {
           return this.evaluate(function loadSlides() {
+            // Note: Not sure why, but this doesn't run locally for me. Runs just fine in CirceCI.
             return document.querySelectorAll(".tp-revslider-mainul .tp-revslider-slidesli").length === 2;
           });
         },
