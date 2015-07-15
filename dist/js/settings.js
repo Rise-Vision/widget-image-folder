@@ -6537,11 +6537,7 @@ angular.module("template/typeahead/typeahead-popup.html", []).run(["$templateCac
 
 if (typeof angular !== "undefined") {
   angular.module("risevision.widget.common.storage-selector.config", [])
-    // ** NOTE **
-    // Due to the build infrastructure and how Widgets import the compiled dist/storage-selector.js version,
-    // the value here will not be used. It is for reference so that it can be used to override the value
-    // in the Widgets config/dev.js file
-    .value("STORAGE_MODAL", "https://storage-stage-rva-test.risevision.com/files/");
+    .value("STORAGE_MODAL", "https://storage.risevision.com/files/");
 }
 
 (function () {
@@ -6967,10 +6963,18 @@ app.run(["$templateCache", function($templateCache) {
 }]);
 })();
 
+/* global config: true */
+/* exported config */
 if (typeof angular !== "undefined") {
   angular.module("risevision.common.i18n.config", [])
     .constant("LOCALES_PREFIX", "locales/translation_")
     .constant("LOCALES_SUFIX", ".json");
+}
+
+if (typeof config === "undefined") {
+  var config = {
+    STORAGE_ENV: "prod"
+  };
 }
 
 angular.module("risevision.widget.imageFolder.settings", [
@@ -7031,7 +7035,6 @@ angular.module("risevision.widget.imageFolder.settings")
       "storage": {},
       "scaleToFit": true,
       "position": "top-left",
-      "order": "alpha-asc",
       "duration": 10,
       "pause": 10,
       "autoHide": false

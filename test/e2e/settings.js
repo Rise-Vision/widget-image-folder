@@ -44,10 +44,6 @@
         expect(element(by.model("position")).getAttribute("value")).to.eventually.equal("top-left");
       });
 
-      it("Order should be A to Z", function () {
-        expect(element(by.model("settings.additionalParams.order")).getAttribute("value")).to.eventually.equal("alpha-asc");
-      });
-
       it("Duration should be 10", function () {
         expect(element(by.model("settings.additionalParams.duration")).getAttribute("value")).to.eventually.equal("10");
       });
@@ -72,10 +68,6 @@
 
       it("Alignment should be hidden", function () {
         expect(element(by.model("position")).isDisplayed()).to.eventually.be.false;
-      });
-
-      it("Order should be hidden", function () {
-        expect(element(by.model("settings.additionalParams.order")).isDisplayed()).to.eventually.be.false;
       });
 
       it("Duration should be hidden", function () {
@@ -104,11 +96,6 @@
         it("Alignment should be shown", function () {
           element(by.model("url")).sendKeys(validUrl);
           expect(element(by.model("position")).isDisplayed()).to.eventually.be.true;
-        });
-
-        it("Order should be shown", function () {
-          element(by.model("url")).sendKeys(validUrl);
-          expect(element(by.model("settings.additionalParams.order")).isDisplayed()).to.eventually.be.true;
         });
 
         it("Duration should be shown", function () {
@@ -141,11 +128,6 @@
         it("Alignment should be hidden", function () {
           element(by.model("url")).sendKeys(invalidUrl);
           expect(element(by.model("position")).isDisplayed()).to.eventually.be.false;
-        });
-
-        it("Order should be hidden", function () {
-          element(by.model("url")).sendKeys(invalidUrl);
-          expect(element(by.model("settings.additionalParams.order")).isDisplayed()).to.eventually.be.false;
         });
 
         it("Duration should be hidden", function () {
@@ -212,7 +194,6 @@
             },
             "scaleToFit": true,
             "position": "top-left",
-            "order": "alpha-asc",
             "duration": 10,
             "pause": 10,
             "autoHide": false

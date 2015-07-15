@@ -143,10 +143,18 @@ RiseVision.Common.Utilities = (function() {
   };
 })();
 
+/* global config: true */
+/* exported config */
 if (typeof angular !== "undefined") {
   angular.module("risevision.common.i18n.config", [])
     .constant("LOCALES_PREFIX", "locales/translation_")
     .constant("LOCALES_SUFIX", ".json");
+}
+
+if (typeof config === "undefined") {
+  var config = {
+    STORAGE_ENV: "prod"
+  };
 }
 
 /* global gadgets */
@@ -240,8 +248,8 @@ RiseVision.ImageFolder.Slider = function (params) {
 
   var totalSlides = 0,
     $api = null,
-    currentUrls = null,
-    newUrls = null,
+    currentFiles = null,
+    newFiles = null,
     navTimer = null,
     slideTimer = null,
     isLastSlide = false,
@@ -261,17 +269,18 @@ RiseVision.ImageFolder.Slider = function (params) {
       image = null,
       position = "";
 
-    totalSlides = currentUrls.length;
+    totalSlides = currentFiles.length;
 
-    currentUrls.forEach(function(url) {
+    currentFiles.forEach(function(file) {
       slide = document.createElement("li");
       image = document.createElement("img");
 
       // Transition
       slide.setAttribute("data-transition", "fade");
       slide.setAttribute("data-masterspeed", 500);
+      slide.setAttribute("data-delay", params.duration * 1000);
 
-      image.src = url;
+      image.src = file.url;
 
       // Alignment
       switch (params.position) {
@@ -339,10 +348,10 @@ RiseVision.ImageFolder.Slider = function (params) {
         RiseVision.ImageFolder.done();
 
         if (refreshSlider) {
-          // Destroy and recreate the slider if the URLs have changed.
+          // Destroy and recreate the slider if the files have changed.
           if ($api) {
             destroySlider();
-            init(newUrls);
+            init(newFiles);
           }
 
           refreshSlider = false;
@@ -396,7 +405,7 @@ RiseVision.ImageFolder.Slider = function (params) {
    *  Public Methods
    *  TODO: Test what happens when folder isn't found.
    */
-  function init(urls) {
+  function init(files) {
     var tpBannerContainer = document.querySelector(".tp-banner-container"),
       fragment = document.createDocumentFragment(),
       tpBanner = document.createElement("div"),
@@ -407,12 +416,11 @@ RiseVision.ImageFolder.Slider = function (params) {
     fragment.appendChild(tpBanner);
     tpBannerContainer.appendChild(fragment);
 
-    currentUrls = urls;
+    currentFiles = _.clone(files);
 
     addSlides();
 
     $api = $(".tp-banner").revolution({
-      "delay": params.duration * 1000,
       "hideThumbs": 0,
       "hideTimerBar": "on",
       "navigationType": "none",
@@ -460,13 +468,11 @@ RiseVision.ImageFolder.Slider = function (params) {
     }
   }
 
-  function refresh(urls) {
+  function refresh(files) {
     // Start preloading images right away.
-    if (!_.isEqual(currentUrls, urls)) {
-      RiseVision.Common.Utilities.preloadImages(urls);
-      newUrls = urls;
-      refreshSlider = true;
-    }
+    RiseVision.Common.Utilities.preloadImages(files);
+    newFiles = _.clone(files);
+    refreshSlider = true;
   }
 
   return {
@@ -477,70 +483,86 @@ RiseVision.ImageFolder.Slider = function (params) {
   };
 };
 
+/* global config, _ */
 var RiseVision = RiseVision || {};
 RiseVision.ImageFolder = RiseVision.ImageFolder || {};
 
 RiseVision.ImageFolder.Storage = function (params) {
   "use strict";
 
-  var isLoading = true;
+  var isLoading = true,
+    files = [],
+    timer = null;
 
   /*
    *  Public Methods
    */
   function init() {
-    var storage = document.querySelector("rise-storage"),
-      sort = "",
-      sortDirection = "";
+    var storage = document.querySelector("rise-storage");
 
-    storage.addEventListener("rise-storage-response", function(e) {
-      var urls = [];
-
-      e.detail.files.forEach(function(file) {
-        urls.push(file.url);
-      });
-
-      if (isLoading) {
-        RiseVision.ImageFolder.initSlider(urls);
-        isLoading = false;
-      }
-      else {
-        RiseVision.ImageFolder.refreshSlider(urls);
-      }
-    });
-
+    storage.addEventListener("rise-storage-response", handleResponse);
     storage.setAttribute("companyId", params.storage.companyId);
     storage.setAttribute("folder", params.storage.folder);
+    storage.setAttribute("env", config.STORAGE_ENV);
+    storage.go();
+  }
 
-    // Sorting
-    switch (params.order) {
-      case "alpha-asc":
-        sort = "name";
-        sortDirection = "asc";
-        break;
-      case "alpha-desc":
-        sort = "name";
-        sortDirection = "desc";
-        break;
-      case "date-asc":
-        sort = "date";
-        sortDirection = "asc";
-        break;
-      case "date-desc":
-        sort = "date";
-        sortDirection = "desc";
-        break;
-      case "random":
-        sort = "random";
-        break;
-      default:
-        sort = "name";
-        sortDirection = "asc";
+  function handleResponse(e) {
+    processUrl(e);
+
+    if (isLoading) {
+      // Need to wait for at least 2 images to load before initializing the slider.
+      // Otherwise, the revolution.slide.onchange event will never fire, and this event is used
+      // to check whether or not the slider should refresh.
+      if (files.length > 1) {
+        isLoading = false;
+
+        clearTimeout(timer);
+        RiseVision.ImageFolder.initSlider(files);
+      }
+      // Set a timeout in case there is only one image in the folder.
+      else {
+        timer = setTimeout(function() {
+          isLoading = false;
+          RiseVision.ImageFolder.initSlider(files);
+        }, 5000);
+      }
+    }
+    else {
+      RiseVision.ImageFolder.refreshSlider(files);
+    }
+  }
+
+  function processUrl(e) {
+    var file;
+
+    if (e.detail) {
+      // Image has been added.
+      if (e.detail.hasOwnProperty("added") && e.detail.added) {
+        files.push({
+          "name": e.detail.name,
+          "url": e.detail.url
+        });
+      }
+      // Image has been changed.
+      else if (e.detail.hasOwnProperty("changed") && e.detail.changed) {
+        file = _.find(files, function(file) {
+          return file.name === e.detail.name;
+        });
+
+        file.url = e.detail.url;
+      }
+      // Image has been deleted.
+      else if (e.detail.hasOwnProperty("deleted") && e.detail.deleted) {
+        files = _.reject(files, function(file) {
+          return file.name === e.detail.name;
+        });
+      }
     }
 
-    storage.setAttribute("sort", sort);
-    storage.setAttribute("sortDirection", sortDirection);
-    storage.go();
+    files = _.sortBy(files, function(file) {
+      return file.name.toLowerCase();
+    });
   }
 
   return {
@@ -579,7 +601,7 @@ RiseVision.ImageFolder.Storage = function (params) {
     gadgets.rpc.register("rscmd_pause_" + id, pause);
     gadgets.rpc.register("rscmd_stop_" + id, stop);
 
-    window.addEventListener("polymer-ready", function() {
+    window.addEventListener("WebComponentsReady", function() {
       gadgets.rpc.register("rsparam_set_" + id, RiseVision.ImageFolder.setParams);
       gadgets.rpc.call("", "rsparam_get", null, id, ["additionalParams"]);
     });

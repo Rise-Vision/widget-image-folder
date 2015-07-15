@@ -55,20 +55,6 @@
               <position-setting position="settings.additionalParams.position"></position-setting>
             </div>
             <div class="form-group" ng-show="settingsForm.urlField.$valid && isFolder">
-              <label for="time-format">{{"image-folder.order.label" | translate}}</label>
-              <div class="row">
-                <div class="col-xs-6 col-md-3">
-                  <select name="order" ng-model="settings.additionalParams.order" class="form-control">
-                    <option value="alpha-asc">{{"image-folder.order.alpha-asc" | translate}}</option>
-                    <option value="alpha-desc">{{"image-folder.order.alpha-desc" | translate}}</option>
-                    <option value="date-asc">{{"image-folder.order.date-asc" | translate}} &uarr;</option>
-                    <option value="date-desc">{{"image-folder.order.date-desc" | translate}} &darr;</option>
-                    <option value="random">{{"image-folder.order.random" | translate}}</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-            <div class="form-group" ng-show="settingsForm.urlField.$valid && isFolder">
               <label>{{"image-folder.duration" | translate}}</label>
               <div class="row">
                 <div class="col-xs-6 col-md-3">

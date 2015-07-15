@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+  <title>Image Folder Widget</title>
+
+  <script src="../../src/components/webcomponentsjs/webcomponents-lite.min.js"></script>
+  <script src="../../src/components/web-component-tester/browser.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js"></script>
+  <script src="//s3.amazonaws.com/rise-common/scripts/slider-revolution/js/jquery.themepunch.tools.min.js"></script>
+  <script src="//s3.amazonaws.com/rise-common/scripts/slider-revolution/js/jquery.themepunch.revolution.min.js"></script>
+
+  <link rel="import" href="../../src/components/rise-storage/rise-storage.html">
+</head>
+<body>
+  <rise-storage fileType="image" refresh="5"></rise-storage>
+
+  <div id="container">
+    <div class="tp-banner-container">
+    </div>
+  </div>
+
+  <script src="//rvashow2.appspot.com/gadgets/gadgets.min.js"></script>
+
+  <script src="../data/no-storage.js"></script>
+
+  <script src="../../node_modules/widget-tester/mocks/gadget-mocks.js"></script>
+
+  <script src="../../src/components/underscore/underscore-min.js"></script>
+  <script src="../../src/components/widget-common/dist/common.js"></script>
+  <script src="../../src/config/config.js"></script>
+  <script src="../../src/widget/image-folder.js"></script>
+  <script src="../../src/widget/storage.js"></script>
+  <script src="../../src/widget/main.js"></script>
+  <script src="../../src/widget/slider.js"></script>
+
+  <script>
+    suite("slider", function() {
+      var storage = document.querySelector("rise-storage"),
+        count = 0,
+        listener;
+
+      suite("initialize", function() {
+        suiteSetup(function() {
+          listener = function(response) {
+            count++;
+          };
+
+          storage.addEventListener("rise-storage-response", listener);
+
+          storage.dispatchEvent(new CustomEvent("rise-storage-response", {
+            "detail": {
+              "added": true,
+              "name": "images/Gone_Girl_Book_Cover.jpg",
+              "url": "https://www.googleapis.com/storage/v1/b/risemedialibrary-b428b4e8-c8b9-41d5-8a10-b4193c789443/o/images%2FGone_Girl_Book_Cover.jpg?alt=media"
+            },
+            "bubbles": true
+          }));
+
+          storage.dispatchEvent(new CustomEvent("rise-storage-response", {
+            "detail": {
+              "added": true,
+              "name": "images/Gated_Book_Cover.jpg",
+              "url": "https://www.googleapis.com/storage/v1/b/risemedialibrary-b428b4e8-c8b9-41d5-8a10-b4193c789443/o/images%2FGated_Book_Cover.jpg?alt=media"
+            },
+            "bubbles": true
+          }));
+        });
+
+        suiteTeardown(function() {
+          storage.removeEventListener("rise-storage-response", listener);
+        });
+
+        var check = function(done) {
+          if (count === 2) {
+            done();
+          }
+          else {
+            setTimeout(function() {
+              check(done)
+            }, 1000);
+          }
+        }
+
+        // Don't run the tests until rise-storage-response has fired for both images.
+        setup(function(done) {
+          check(done);
+        });
+
+        test("should scale image to fit", function() {
+          assert.equal(document.querySelector(".tp-bgimg").getAttribute("data-bgfit"), "contain");
+        });
+
+        test("should align image at top left", function() {
+          assert.equal(document.querySelector(".tp-bgimg").getAttribute("data-bgposition"), "left top");
+        });
+
+        test("should have left arrow", function() {
+          assert.isNotNull(document.querySelector(".tp-leftarrow"));
+        });
+
+        test("should have right arrow", function() {
+          assert.isNotNull(document.querySelector(".tp-rightarrow"));
+        });
+
+        test("should add correct number of images to slider", function() {
+          assert.equal(document.querySelectorAll(".tp-revslider-mainul .tp-revslider-slidesli").length, 2);
+        });
+
+        test("should add images in alphabetical order", function() {
+          assert.equal(document.querySelector(".tp-revslider-mainul .tp-revslider-slidesli:nth-child(1) .tp-bgimg").getAttribute("src"), "https://www.googleapis.com/storage/v1/b/risemedialibrary-b428b4e8-c8b9-41d5-8a10-b4193c789443/o/images%2FGated_Book_Cover.jpg?alt=media", "first slide");
+
+          assert.equal(document.querySelector(".tp-revslider-mainul .tp-revslider-slidesli:nth-child(2) .tp-bgimg").getAttribute("src"), "https://www.googleapis.com/storage/v1/b/risemedialibrary-b428b4e8-c8b9-41d5-8a10-b4193c789443/o/images%2FGone_Girl_Book_Cover.jpg?alt=media", "second slide");
+        });
+      });
+
+      suite("update", function() {
+        suiteSetup(function() {
+          storage.dispatchEvent(new CustomEvent("rise-storage-response", {
+            "detail": {
+              "changed": true,
+              "name": "images/Gated_Book_Cover.jpg",
+              "url": "https://www.googleapis.com/storage/v1/b/risemedialibrary-b428b4e8-c8b9-41d5-8a10-b4193c789443/o/images%2FGated_Book_Cover.jpg?alt=media&cb=0"
+            },
+            "bubbles": true
+          }));
+        });
+
+        test("should update image", function(done) {
+          setTimeout(function() {
+            assert.equal(document.querySelector(".tp-revslider-mainul .tp-revslider-slidesli:nth-child(1) .tp-bgimg").getAttribute("src"), "https://www.googleapis.com/storage/v1/b/risemedialibrary-b428b4e8-c8b9-41d5-8a10-b4193c789443/o/images%2FGated_Book_Cover.jpg?alt=media&cb=0");
+            done();
+          }, 5000);
+        });
+      });
+
+      suite("delete", function() {
+        suiteSetup(function() {
+          storage.dispatchEvent(new CustomEvent("rise-storage-response", {
+            "detail": {
+              "deleted": true,
+              "name": "images/Gated_Book_Cover.jpg",
+              "url": "https://www.googleapis.com/storage/v1/b/risemedialibrary-b428b4e8-c8b9-41d5-8a10-b4193c789443/o/images%2FGated_Book_Cover.jpg?alt=media&cb=0"
+            },
+            "bubbles": true
+          }));
+        });
+
+        test("should delete image", function(done) {
+          setTimeout(function() {
+            assert.equal(document.querySelectorAll(".tp-revslider-mainul .tp-revslider-slidesli").length, 1, "number of slides");
+            assert.equal(document.querySelector(".tp-revslider-mainul .tp-revslider-slidesli:nth-child(1) .tp-bgimg").getAttribute("src"), "https://www.googleapis.com/storage/v1/b/risemedialibrary-b428b4e8-c8b9-41d5-8a10-b4193c789443/o/images%2FGone_Girl_Book_Cover.jpg?alt=media", "slide");
+            done();
+          }, 5000);
+        });
+      });
+    });
+  </script>
+</body>
+</html>
