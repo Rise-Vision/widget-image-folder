@@ -7,8 +7,8 @@ RiseVision.ImageFolder.Slider = function (params) {
 
   var totalSlides = 0,
     $api = null,
-    currentUrls = null,
-    newUrls = null,
+    currentFiles = null,
+    newFiles = null,
     navTimer = null,
     slideTimer = null,
     isLastSlide = false,
@@ -28,17 +28,18 @@ RiseVision.ImageFolder.Slider = function (params) {
       image = null,
       position = "";
 
-    totalSlides = currentUrls.length;
+    totalSlides = currentFiles.length;
 
-    currentUrls.forEach(function(url) {
+    currentFiles.forEach(function(file) {
       slide = document.createElement("li");
       image = document.createElement("img");
 
       // Transition
       slide.setAttribute("data-transition", "fade");
       slide.setAttribute("data-masterspeed", 500);
+      slide.setAttribute("data-delay", params.duration * 1000);
 
-      image.src = url;
+      image.src = file.url;
 
       // Alignment
       switch (params.position) {
@@ -106,10 +107,10 @@ RiseVision.ImageFolder.Slider = function (params) {
         RiseVision.ImageFolder.done();
 
         if (refreshSlider) {
-          // Destroy and recreate the slider if the URLs have changed.
+          // Destroy and recreate the slider if the files have changed.
           if ($api) {
             destroySlider();
-            init(newUrls);
+            init(newFiles);
           }
 
           refreshSlider = false;
@@ -163,7 +164,7 @@ RiseVision.ImageFolder.Slider = function (params) {
    *  Public Methods
    *  TODO: Test what happens when folder isn't found.
    */
-  function init(urls) {
+  function init(files) {
     var tpBannerContainer = document.querySelector(".tp-banner-container"),
       fragment = document.createDocumentFragment(),
       tpBanner = document.createElement("div"),
@@ -174,12 +175,11 @@ RiseVision.ImageFolder.Slider = function (params) {
     fragment.appendChild(tpBanner);
     tpBannerContainer.appendChild(fragment);
 
-    currentUrls = urls;
+    currentFiles = _.clone(files);
 
     addSlides();
 
     $api = $(".tp-banner").revolution({
-      "delay": params.duration * 1000,
       "hideThumbs": 0,
       "hideTimerBar": "on",
       "navigationType": "none",
@@ -227,13 +227,11 @@ RiseVision.ImageFolder.Slider = function (params) {
     }
   }
 
-  function refresh(urls) {
+  function refresh(files) {
     // Start preloading images right away.
-    if (!_.isEqual(currentUrls, urls)) {
-      RiseVision.Common.Utilities.preloadImages(urls);
-      newUrls = urls;
-      refreshSlider = true;
-    }
+    RiseVision.Common.Utilities.preloadImages(files);
+    newFiles = _.clone(files);
+    refreshSlider = true;
   }
 
   return {

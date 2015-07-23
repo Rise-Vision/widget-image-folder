@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+  <title>Image Folder Widget</title>
+
+  <script src="../../src/components/webcomponentsjs/webcomponents-lite.min.js"></script>
+  <script src="../../src/components/web-component-tester/browser.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js"></script>
+  <script src="//s3.amazonaws.com/rise-common/scripts/slider-revolution/js/jquery.themepunch.tools.min.js"></script>
+  <script src="//s3.amazonaws.com/rise-common/scripts/slider-revolution/js/jquery.themepunch.revolution.min.js"></script>
+
+  <link rel="import" href="../../src/components/rise-storage/rise-storage.html">
+</head>
+<body>
+  <rise-storage fileType="image" refresh="5"></rise-storage>
+
+  <div id="container">
+    <div class="tp-banner-container">
+    </div>
+  </div>
+
+  <script src="//rvashow2.appspot.com/gadgets/gadgets.min.js"></script>
+
+  <script src="../data/storage.js"></script>
+
+  <script src="../../node_modules/widget-tester/mocks/gadget-mocks.js"></script>
+
+  <script src="../../src/components/underscore/underscore-min.js"></script>
+  <script src="../../src/components/widget-common/dist/common.js"></script>
+  <script src="../../src/config/config.js"></script>
+  <script src="../../src/widget/image-folder.js"></script>
+  <script src="../../src/widget/storage.js"></script>
+  <script src="../../src/widget/main.js"></script>
+  <script src="../../src/widget/slider.js"></script>
+
+  <script>
+    suite("storage component", function() {
+      var storage = document.querySelector("rise-storage");
+
+      test("should set companyid attribute of storage component", function() {
+        assert.equal(storage.companyid, "abc123");
+      });
+
+      test("should set folder attribute of storage component", function() {
+        assert.equal(storage.folder, "images/");
+      });
+
+      test("should set env attribute of storage component", function() {
+        assert.equal(storage.env, config.STORAGE_ENV);
+      });
+    });
+  </script>
+</body>
+</html>

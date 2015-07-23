@@ -16,6 +16,7 @@
   var sourcemaps = require("gulp-sourcemaps");
   var uglify = require("gulp-uglify");
   var usemin = require("gulp-usemin");
+  var wct = require("web-component-tester").gulp.init(gulp);
 
   var appJSFiles = [
       "src/**/*.js",
@@ -85,13 +86,13 @@
 
   gulp.task("rise-storage", function() {
     return gulp.src([
-      "src/components/webcomponentsjs/webcomponents.js",
-      "src/components/webcomponentsjs/webcomponents.min.js",
+      "src/components/webcomponentsjs/webcomponents*.js",
       "src/components/underscore/underscore*.*",
       "src/components/rise-storage/rise-storage.html",
       "src/components/polymer/*.*{html,js}",
-      "src/components/core-ajax/core-ajax.html",
-      "src/components/core-ajax/core-xhr.html"
+      "src/components/promise-polyfill/*.*{html,js}",
+      "src/components/iron-ajax/iron-ajax.html",
+      "src/components/iron-ajax/iron-request.html"
     ], {base: "./src/"})
       .pipe(gulp.dest("dist/"));
   });
@@ -104,7 +105,7 @@
 
   // e2e testing
   gulp.task("html:e2e", factory.htmlE2E({
-    files: ["./src/settings.html", "./src/widget.html"],
+    files: ["./src/settings.html"],
     e2eStorageMock: "../node_modules/widget-tester/mocks/rise-storage-mock.js",
     e2eMockData: "../test/data/storage.js"
   }));
@@ -112,21 +113,22 @@
   gulp.task("e2e:server", ["config", "html:e2e"], factory.testServer());
 
   gulp.task("test:e2e:settings", ["webdriver_update"], factory.testE2EAngular({
-      testFiles: "test/e2e/settings.js"}
-  ));
-
-  gulp.task("test:e2e:widget", factory.testE2E({
-      testFiles: "test/e2e/widget.js"}
-  ));
+    testFiles: "test/e2e/settings.js"
+  }));
 
   gulp.task("e2e:server-close", factory.testServerClose());
 
   gulp.task("test:e2e", function(cb) {
-    runSequence(["html:e2e", "e2e:server"], "test:e2e:settings", "test:e2e:widget", "e2e:server-close", cb);
+    runSequence(["html:e2e", "e2e:server"], "test:e2e:settings", "e2e:server-close", cb);
+  });
+
+  // Integration testing
+  gulp.task("test:integration", function(cb) {
+    runSequence("test:local", cb);
   });
 
   gulp.task("test", function(cb) {
-    runSequence("test:e2e", cb);
+    runSequence("test:e2e", "test:integration", cb);
   });
 
   gulp.task("build", function (cb) {

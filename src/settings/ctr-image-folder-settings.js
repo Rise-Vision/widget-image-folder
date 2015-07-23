@@ -47,7 +47,6 @@ angular.module("risevision.widget.imageFolder.settings")
       "storage": {},
       "scaleToFit": true,
       "position": "top-left",
-      "order": "alpha-asc",
       "duration": 10,
       "pause": 10,
       "autoHide": false

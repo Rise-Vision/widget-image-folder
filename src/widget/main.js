@@ -29,7 +29,7 @@
     gadgets.rpc.register("rscmd_pause_" + id, pause);
     gadgets.rpc.register("rscmd_stop_" + id, stop);
 
-    window.addEventListener("polymer-ready", function() {
+    window.addEventListener("WebComponentsReady", function() {
       gadgets.rpc.register("rsparam_set_" + id, RiseVision.ImageFolder.setParams);
       gadgets.rpc.call("", "rsparam_get", null, id, ["additionalParams"]);
     });
