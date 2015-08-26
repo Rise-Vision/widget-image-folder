@@ -38,42 +38,30 @@
   <script>
     suite("slider", function() {
       var storage = document.querySelector("rise-storage"),
-        count = 0,
-        listener;
+        spy;
 
       suite("initialize", function() {
-        suiteSetup(function() {
-          listener = function(response) {
-            count++;
-          };
-
-          storage.addEventListener("rise-storage-response", listener);
-
-          storage.dispatchEvent(new CustomEvent("rise-storage-response", {
-            "detail": {
-              "added": true,
-              "name": "images/Gone_Girl_Book_Cover.jpg",
-              "url": "https://www.googleapis.com/storage/v1/b/risemedialibrary-b428b4e8-c8b9-41d5-8a10-b4193c789443/o/images%2FGone_Girl_Book_Cover.jpg?alt=media"
-            },
-            "bubbles": true
-          }));
-
-          storage.dispatchEvent(new CustomEvent("rise-storage-response", {
-            "detail": {
-              "added": true,
-              "name": "images/Gated_Book_Cover.jpg",
-              "url": "https://www.googleapis.com/storage/v1/b/risemedialibrary-b428b4e8-c8b9-41d5-8a10-b4193c789443/o/images%2FGated_Book_Cover.jpg?alt=media"
-            },
-            "bubbles": true
-          }));
-        });
-
-        suiteTeardown(function() {
-          storage.removeEventListener("rise-storage-response", listener);
-        });
-
+        // Don't run tests until slider has been initialized.
         var check = function(done) {
-          if (count === 2) {
+          if (spy && spy.calledOnce) {
+            storage.dispatchEvent(new CustomEvent("rise-storage-response", {
+              "detail": {
+                "added": true,
+                "name": "images/Gone_Girl_Book_Cover.jpg",
+                "url": "https://www.googleapis.com/storage/v1/b/risemedialibrary-b428b4e8-c8b9-41d5-8a10-b4193c789443/o/images%2FGone_Girl_Book_Cover.jpg?alt=media"
+              },
+              "bubbles": true
+            }));
+
+            storage.dispatchEvent(new CustomEvent("rise-storage-response", {
+              "detail": {
+                "added": true,
+                "name": "images/Gated_Book_Cover.jpg",
+                "url": "https://www.googleapis.com/storage/v1/b/risemedialibrary-b428b4e8-c8b9-41d5-8a10-b4193c789443/o/images%2FGated_Book_Cover.jpg?alt=media"
+              },
+              "bubbles": true
+            }));
+
             done();
           }
           else {
@@ -81,11 +69,16 @@
               check(done)
             }, 1000);
           }
-        }
+        };
 
-        // Don't run the tests until rise-storage-response has fired for both images.
-        setup(function(done) {
+        suiteSetup(function(done) {
+          spy = sinon.spy(RiseVision.ImageFolder, "setParams");
+
           check(done);
+        });
+
+        suiteTeardown(function() {
+          RiseVision.ImageFolder.setParams.restore();
         });
 
         test("should scale image to fit", function() {

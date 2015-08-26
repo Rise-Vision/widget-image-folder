@@ -39,6 +39,22 @@
     suite("storage component", function() {
       var storage = document.querySelector("rise-storage");
 
+      // Don't execute tests until rise-storage attributes are set.
+      var check = function(done) {
+        if (storage.companyid !== "") {
+          done();
+        }
+        else {
+          setTimeout(function() {
+            check(done)
+          }, 1000);
+        }
+      };
+
+      suiteSetup(function(done) {
+        check(done);
+      });
+
       test("should set companyid attribute of storage component", function() {
         assert.equal(storage.companyid, "abc123");
       });
