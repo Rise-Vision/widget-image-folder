@@ -8,6 +8,7 @@ RiseVision.ImageFolder = (function (gadgets) {
   var params,
     storage = null,
     slider = null,
+    message = null,
     prefs = new gadgets.Prefs();
 
   /*
@@ -16,6 +17,11 @@ RiseVision.ImageFolder = (function (gadgets) {
   function init() {
     params.width = prefs.getInt("rsW");
     params.height = prefs.getInt("rsH");
+
+    message = new RiseVision.ImageFolder.Message();
+    // show wait message while Storage initializes
+    message.show("Please wait while your image is downloaded.");
+
     storage = new RiseVision.ImageFolder.Storage(params);
     storage.init();
   }
@@ -29,12 +35,16 @@ RiseVision.ImageFolder = (function (gadgets) {
         params = JSON.parse(values[0]);
 
         document.getElementById("container").style.height = prefs.getInt("rsH") + "px";
+        document.getElementById("messageContainer").style.height = prefs.getInt("rsH") + "px";
         init();
       }
     }
   }
 
   function initSlider(urls) {
+    // in case a message previously shown because of empty folder or folder didn't exist
+    message.hide();
+
     if (slider === null) {
       slider = new RiseVision.ImageFolder.Slider(params);
       slider.init(urls);
@@ -42,8 +52,19 @@ RiseVision.ImageFolder = (function (gadgets) {
   }
 
   function refreshSlider(urls) {
+    // in case a message previously shown because of empty folder or folder didn't exist
+    message.hide();
+
     if (slider !== null) {
       slider.refresh(urls);
+    }
+  }
+
+  function noFiles(type) {
+    if (type === "empty") {
+      message.show("The selected folder does not contain any images.");
+    } else if (type === "noexist") {
+      message.show("The selected folder does not exist.");
     }
   }
 
@@ -76,6 +97,7 @@ RiseVision.ImageFolder = (function (gadgets) {
     "stop": stop,
     "setParams": setParams,
     "initSlider": initSlider,
-    "refreshSlider": refreshSlider
+    "refreshSlider": refreshSlider,
+    "noFiles": noFiles
   };
 })(gadgets);

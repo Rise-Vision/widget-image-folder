@@ -11,6 +11,19 @@
       margin: 0;
       padding: 0;
     }
+
+    #messageContainer {
+      display: none; /* hide by default */
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+    }
+
+    .message {
+      text-align: center;
+      vertical-align: middle;
+    }
   </style>
 
   <script src="components/webcomponentsjs/webcomponents.min.js"></script>
@@ -24,6 +37,8 @@
     <div class="tp-banner-container">
     </div>
   </div>
+
+  <div id="messageContainer"></div>
 
   <script src="//ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js"></script>
   <script src="//s3.amazonaws.com/rise-common/scripts/slider-revolution/js/jquery.themepunch.tools.min.js"></script>

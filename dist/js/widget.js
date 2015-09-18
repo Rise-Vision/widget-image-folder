@@ -167,6 +167,7 @@ RiseVision.ImageFolder = (function (gadgets) {
   var params,
     storage = null,
     slider = null,
+    message = null,
     prefs = new gadgets.Prefs();
 
   /*
@@ -175,6 +176,11 @@ RiseVision.ImageFolder = (function (gadgets) {
   function init() {
     params.width = prefs.getInt("rsW");
     params.height = prefs.getInt("rsH");
+
+    message = new RiseVision.ImageFolder.Message();
+    // show wait message while Storage initializes
+    message.show("Please wait while your image is downloaded.");
+
     storage = new RiseVision.ImageFolder.Storage(params);
     storage.init();
   }
@@ -188,12 +194,16 @@ RiseVision.ImageFolder = (function (gadgets) {
         params = JSON.parse(values[0]);
 
         document.getElementById("container").style.height = prefs.getInt("rsH") + "px";
+        document.getElementById("messageContainer").style.height = prefs.getInt("rsH") + "px";
         init();
       }
     }
   }
 
   function initSlider(urls) {
+    // in case a message previously shown because of empty folder or folder didn't exist
+    message.hide();
+
     if (slider === null) {
       slider = new RiseVision.ImageFolder.Slider(params);
       slider.init(urls);
@@ -201,8 +211,19 @@ RiseVision.ImageFolder = (function (gadgets) {
   }
 
   function refreshSlider(urls) {
+    // in case a message previously shown because of empty folder or folder didn't exist
+    message.hide();
+
     if (slider !== null) {
       slider.refresh(urls);
+    }
+  }
+
+  function noFiles(type) {
+    if (type === "empty") {
+      message.show("The selected folder does not contain any images.");
+    } else if (type === "noexist") {
+      message.show("The selected folder does not exist.");
     }
   }
 
@@ -235,7 +256,8 @@ RiseVision.ImageFolder = (function (gadgets) {
     "stop": stop,
     "setParams": setParams,
     "initSlider": initSlider,
-    "refreshSlider": refreshSlider
+    "refreshSlider": refreshSlider,
+    "noFiles": noFiles
   };
 })(gadgets);
 
@@ -483,6 +505,70 @@ RiseVision.ImageFolder.Slider = function (params) {
   };
 };
 
+var RiseVision = RiseVision || {};
+RiseVision.ImageFolder = RiseVision.ImageFolder || {};
+
+RiseVision.ImageFolder.Message = function () {
+  "use strict";
+
+  var _active = false;
+
+  /*
+   *  Public Methods
+   */
+  function hide() {
+    var messageContainer = document.getElementById("messageContainer");
+
+    if (_active) {
+      // clear content of message container
+      while (messageContainer.firstChild) {
+        messageContainer.removeChild(messageContainer.firstChild);
+      }
+
+      // hide message container
+      messageContainer.style.display = "none";
+
+      // show main container (slider)
+      document.getElementById("container").style.visibility = "visible";
+
+      _active = false;
+    }
+  }
+
+  function show(message) {
+    var messageContainer = document.getElementById("messageContainer"),
+      fragment = document.createDocumentFragment(),
+      p;
+
+    if (!_active) {
+      // hide main container (slider)
+      document.getElementById("container").style.visibility = "hidden";
+
+      messageContainer.style.display = "block";
+
+      // create message element
+      p = document.createElement("p");
+      p.innerHTML = message;
+      p.setAttribute("class", "message");
+      p.style.lineHeight = messageContainer.style.height;
+
+      fragment.appendChild(p);
+      messageContainer.appendChild(fragment);
+
+      _active = true;
+    } else {
+      // message already being shown, update message text
+      p = messageContainer.querySelector(".message");
+      p.innerHTML = message;
+    }
+  }
+
+  return {
+    "hide": hide,
+    "show": show
+  };
+};
+
 /* global config, _ */
 var RiseVision = RiseVision || {};
 RiseVision.ImageFolder = RiseVision.ImageFolder || {};
@@ -495,12 +581,25 @@ RiseVision.ImageFolder.Storage = function (params) {
     timer = null;
 
   /*
+   *  Private Methods
+   */
+  function _handleEmptyFolder() {
+    RiseVision.ImageFolder.noFiles("empty");
+  }
+
+  function _handleNoFolder() {
+    RiseVision.ImageFolder.noFiles("noexist");
+  }
+
+  /*
    *  Public Methods
    */
   function init() {
     var storage = document.querySelector("rise-storage");
 
     storage.addEventListener("rise-storage-response", handleResponse);
+    storage.addEventListener("rise-storage-empty-folder", _handleEmptyFolder);
+    storage.addEventListener("rise-storage-no-folder", _handleNoFolder);
     storage.setAttribute("companyId", params.storage.companyId);
     storage.setAttribute("folder", params.storage.folder);
     storage.setAttribute("env", config.STORAGE_ENV);

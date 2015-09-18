@@ -21,6 +21,8 @@
     </div>
   </div>
 
+  <div id="messageContainer"></div>
+
   <script src="//rvashow2.appspot.com/gadgets/gadgets.min.js"></script>
 
   <script src="../data/no-storage.js"></script>
@@ -32,13 +34,14 @@
   <script src="../../src/config/config.js"></script>
   <script src="../../src/widget/image-folder.js"></script>
   <script src="../../src/widget/storage.js"></script>
+  <script src="../../src/widget/message.js"></script>
   <script src="../../src/widget/main.js"></script>
   <script src="../../src/widget/slider.js"></script>
 
   <script>
     suite("slider", function() {
       var storage = document.querySelector("rise-storage"),
-        spy;
+        spy = sinon.spy(RiseVision.ImageFolder, "setParams");
 
       suite("initialize", function() {
         // Don't run tests until slider has been initialized.
@@ -72,8 +75,6 @@
         };
 
         suiteSetup(function(done) {
-          spy = sinon.spy(RiseVision.ImageFolder, "setParams");
-
           check(done);
         });
 

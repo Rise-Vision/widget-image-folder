@@ -10,12 +10,25 @@ RiseVision.ImageFolder.Storage = function (params) {
     timer = null;
 
   /*
+   *  Private Methods
+   */
+  function _handleEmptyFolder() {
+    RiseVision.ImageFolder.noFiles("empty");
+  }
+
+  function _handleNoFolder() {
+    RiseVision.ImageFolder.noFiles("noexist");
+  }
+
+  /*
    *  Public Methods
    */
   function init() {
     var storage = document.querySelector("rise-storage");
 
     storage.addEventListener("rise-storage-response", handleResponse);
+    storage.addEventListener("rise-storage-empty-folder", _handleEmptyFolder);
+    storage.addEventListener("rise-storage-no-folder", _handleNoFolder);
     storage.setAttribute("companyId", params.storage.companyId);
     storage.setAttribute("folder", params.storage.folder);
     storage.setAttribute("env", config.STORAGE_ENV);
