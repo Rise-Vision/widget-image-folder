@@ -164,6 +164,14 @@ RiseVision.ImageFolder.Slider = function (params) {
    *  Public Methods
    *  TODO: Test what happens when folder isn't found.
    */
+  function destroy() {
+    if ($api) {
+      isLastSlide = false;
+      $api.revpause();
+      destroySlider();
+    }
+  }
+
   function init(files) {
     var tpBannerContainer = document.querySelector(".tp-banner-container"),
       fragment = document.createDocumentFragment(),
@@ -239,6 +247,7 @@ RiseVision.ImageFolder.Slider = function (params) {
   }
 
   return {
+    "destroy": destroy,
     "init": init,
     "isReady": isReady,
     "play": play,

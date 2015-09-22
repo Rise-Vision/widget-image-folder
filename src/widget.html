@@ -6,25 +6,11 @@
   <title>Image Folder Widget</title>
   <link rel="stylesheet" href="//s3.amazonaws.com/rise-common/scripts/slider-revolution/css/style.css">
   <link rel="stylesheet" href="//s3.amazonaws.com/rise-common/scripts/slider-revolution/css/settings.css">
-  <style>
-    body {
-      margin: 0;
-      padding: 0;
-    }
 
-    #messageContainer {
-      display: none; /* hide by default */
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-    }
-
-    .message {
-      text-align: center;
-      vertical-align: middle;
-    }
-  </style>
+  <!-- build:css css/widget.min.css -->
+  <link rel="stylesheet" href="widget/css/styles.css">
+  <link rel="stylesheet" href="components/widget-common/dist/css/message.css">
+  <!-- endbuild -->
 
   <script src="components/webcomponentsjs/webcomponents.min.js"></script>
   <link rel="import" href="components/rise-storage/rise-storage.html">
@@ -60,7 +46,7 @@
   <script src="config/config.js"></script>
   <script src="widget/image-folder.js"></script>
   <script src="widget/slider.js"></script>
-  <script src="widget/message.js"></script>
+  <script src="components/widget-common/dist/message.js"></script>
   <script src="widget/storage.js"></script>
   <script src="widget/main.js"></script>
   <script src="widget/analytics.js"></script>

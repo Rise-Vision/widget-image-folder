@@ -168,6 +168,8 @@ RiseVision.ImageFolder = (function (gadgets) {
     storage = null,
     slider = null,
     message = null,
+    noFilesTimer = null,
+    noFilesFlag = false,
     prefs = new gadgets.Prefs();
 
   var viewerPaused = true;
@@ -175,11 +177,18 @@ RiseVision.ImageFolder = (function (gadgets) {
   /*
    *  Private Methods
    */
+  function clearNoFilesTimer() {
+    clearTimeout(noFilesTimer);
+    noFilesTimer = null;
+  }
+
   function init() {
     params.width = prefs.getInt("rsW");
     params.height = prefs.getInt("rsH");
 
-    message = new RiseVision.ImageFolder.Message();
+    message = new RiseVision.Common.Message(document.getElementById("container"),
+      document.getElementById("messageContainer"));
+
     // show wait message while Storage initializes
     message.show("Please wait while your image is downloaded.");
 
@@ -187,6 +196,15 @@ RiseVision.ImageFolder = (function (gadgets) {
     storage.init();
 
     ready();
+  }
+
+  function startNoFilesTimer() {
+    clearNoFilesTimer();
+
+    noFilesTimer = setTimeout(function () {
+      // notify Viewer widget is done
+      done();
+    }, 5000);
   }
 
   /*
@@ -198,7 +216,6 @@ RiseVision.ImageFolder = (function (gadgets) {
         params = JSON.parse(values[0]);
 
         document.getElementById("container").style.height = prefs.getInt("rsH") + "px";
-        document.getElementById("messageContainer").style.height = prefs.getInt("rsH") + "px";
         init();
       }
     }
@@ -212,9 +229,6 @@ RiseVision.ImageFolder = (function (gadgets) {
   }
 
   function refreshSlider(urls) {
-    // in case a message previously shown because of empty folder or folder didn't exist
-    message.hide();
-
     if (slider !== null) {
       slider.refresh(urls);
     }
@@ -229,10 +243,22 @@ RiseVision.ImageFolder = (function (gadgets) {
   }
 
   function noFiles(type) {
+    noFilesFlag = true;
+
     if (type === "empty") {
       message.show("The selected folder does not contain any images.");
     } else if (type === "noexist") {
       message.show("The selected folder does not exist.");
+    }
+
+    // destroy slider if it exists and previously notified ready
+    if (slider && slider.isReady()) {
+      slider.destroy();
+    }
+
+    // if Widget is playing right now, run the timer
+    if (!viewerPaused) {
+      startNoFilesTimer();
     }
   }
 
@@ -248,16 +274,24 @@ RiseVision.ImageFolder = (function (gadgets) {
   function play() {
     viewerPaused = false;
 
-    if (slider && slider.isReady()) {
-      slider.play();
+    if (noFilesFlag) {
+      startNoFilesTimer();
+    } else {
+      if (slider && slider.isReady()) {
+        slider.play();
+      }
     }
   }
 
   function pause() {
     viewerPaused = true;
 
-    if (slider && slider.isReady()) {
-      slider.pause();
+    if (noFilesFlag) {
+      clearNoFilesTimer();
+    } else {
+      if (slider && slider.isReady()) {
+        slider.pause();
+      }
     }
   }
 
@@ -445,6 +479,14 @@ RiseVision.ImageFolder.Slider = function (params) {
    *  Public Methods
    *  TODO: Test what happens when folder isn't found.
    */
+  function destroy() {
+    if ($api) {
+      isLastSlide = false;
+      $api.revpause();
+      destroySlider();
+    }
+  }
+
   function init(files) {
     var tpBannerContainer = document.querySelector(".tp-banner-container"),
       fragment = document.createDocumentFragment(),
@@ -520,6 +562,7 @@ RiseVision.ImageFolder.Slider = function (params) {
   }
 
   return {
+    "destroy": destroy,
     "init": init,
     "isReady": isReady,
     "play": play,
@@ -529,19 +572,25 @@ RiseVision.ImageFolder.Slider = function (params) {
 };
 
 var RiseVision = RiseVision || {};
-RiseVision.ImageFolder = RiseVision.ImageFolder || {};
+RiseVision.Common = RiseVision.Common || {};
 
-RiseVision.ImageFolder.Message = function () {
+RiseVision.Common.Message = function (mainContainer, messageContainer) {
   "use strict";
 
   var _active = false;
+
+  function _init() {
+    try {
+      messageContainer.style.height = mainContainer.style.height;
+    } catch (e) {
+      console.warn("Can't initialize Message - ", e.message);
+    }
+  }
 
   /*
    *  Public Methods
    */
   function hide() {
-    var messageContainer = document.getElementById("messageContainer");
-
     if (_active) {
       // clear content of message container
       while (messageContainer.firstChild) {
@@ -551,21 +600,20 @@ RiseVision.ImageFolder.Message = function () {
       // hide message container
       messageContainer.style.display = "none";
 
-      // show main container (slider)
-      document.getElementById("container").style.visibility = "visible";
+      // show main container
+      mainContainer.style.visibility = "visible";
 
       _active = false;
     }
   }
 
   function show(message) {
-    var messageContainer = document.getElementById("messageContainer"),
-      fragment = document.createDocumentFragment(),
+    var fragment = document.createDocumentFragment(),
       p;
 
     if (!_active) {
-      // hide main container (slider)
-      document.getElementById("container").style.visibility = "hidden";
+      // hide main container
+      mainContainer.style.visibility = "hidden";
 
       messageContainer.style.display = "block";
 
@@ -585,6 +633,8 @@ RiseVision.ImageFolder.Message = function () {
       p.innerHTML = message;
     }
   }
+
+  _init();
 
   return {
     "hide": hide,

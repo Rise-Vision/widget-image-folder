@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
   <title>Image Folder Widget</title>
 
+  <link rel="stylesheet" href="../../src/widget/css/styles.css">
+  <link rel="stylesheet" href="../../src/components/widget-common/dist/css/message.css">
+
   <script src="../../src/components/webcomponentsjs/webcomponents-lite.min.js"></script>
   <script src="../../src/components/web-component-tester/browser.js"></script>
   <script src="//ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js"></script>
@@ -34,7 +37,7 @@
 <script src="../../src/config/config.js"></script>
 <script src="../../src/widget/image-folder.js"></script>
 <script src="../../src/widget/storage.js"></script>
-<script src="../../src/widget/message.js"></script>
+<script src="../../src/components/widget-common/dist/message.js"></script>
 <script src="../../src/widget/main.js"></script>
 <script src="../../src/widget/slider.js"></script>
 
@@ -43,9 +46,7 @@
     var storage = document.querySelector("rise-storage");
 
     suite("waiting", function() {
-      test("should show empty folder message", function() {
-        assert.isTrue($("#container").css("visibility") === "hidden", "main container is hidden");
-        assert.equal($("#messageContainer").is(":visible"), true, "message container is showing");
+      test("should show waiting message", function() {
         assert.equal($(".message").text(), "Please wait while your image is downloaded.", "message is correct");
       });
     });
@@ -59,8 +60,6 @@
       });
 
       test("should show no folder message", function() {
-        assert.isTrue($("#container").css("visibility") === "hidden", "main container is hidden");
-        assert.equal($("#messageContainer").is(":visible"), true, "message container is showing");
         assert.equal($(".message").text(), "The selected folder does not exist.", "message is correct");
       });
     });
@@ -73,9 +72,7 @@
         }));
       });
 
-      test("should show no folder message", function() {
-        assert.isTrue($("#container").css("visibility") === "hidden", "main container is hidden");
-        assert.equal($("#messageContainer").is(":visible"), true, "message container is showing");
+      test("should show empty folder message", function() {
         assert.equal($(".message").text(), "The selected folder does not contain any images.");
       });
     });

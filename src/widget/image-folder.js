@@ -9,6 +9,8 @@ RiseVision.ImageFolder = (function (gadgets) {
     storage = null,
     slider = null,
     message = null,
+    noFilesTimer = null,
+    noFilesFlag = false,
     prefs = new gadgets.Prefs();
 
   var viewerPaused = true;
@@ -16,11 +18,18 @@ RiseVision.ImageFolder = (function (gadgets) {
   /*
    *  Private Methods
    */
+  function clearNoFilesTimer() {
+    clearTimeout(noFilesTimer);
+    noFilesTimer = null;
+  }
+
   function init() {
     params.width = prefs.getInt("rsW");
     params.height = prefs.getInt("rsH");
 
-    message = new RiseVision.ImageFolder.Message();
+    message = new RiseVision.Common.Message(document.getElementById("container"),
+      document.getElementById("messageContainer"));
+
     // show wait message while Storage initializes
     message.show("Please wait while your image is downloaded.");
 
@@ -28,6 +37,15 @@ RiseVision.ImageFolder = (function (gadgets) {
     storage.init();
 
     ready();
+  }
+
+  function startNoFilesTimer() {
+    clearNoFilesTimer();
+
+    noFilesTimer = setTimeout(function () {
+      // notify Viewer widget is done
+      done();
+    }, 5000);
   }
 
   /*
@@ -39,7 +57,6 @@ RiseVision.ImageFolder = (function (gadgets) {
         params = JSON.parse(values[0]);
 
         document.getElementById("container").style.height = prefs.getInt("rsH") + "px";
-        document.getElementById("messageContainer").style.height = prefs.getInt("rsH") + "px";
         init();
       }
     }
@@ -53,9 +70,6 @@ RiseVision.ImageFolder = (function (gadgets) {
   }
 
   function refreshSlider(urls) {
-    // in case a message previously shown because of empty folder or folder didn't exist
-    message.hide();
-
     if (slider !== null) {
       slider.refresh(urls);
     }
@@ -70,10 +84,22 @@ RiseVision.ImageFolder = (function (gadgets) {
   }
 
   function noFiles(type) {
+    noFilesFlag = true;
+
     if (type === "empty") {
       message.show("The selected folder does not contain any images.");
     } else if (type === "noexist") {
       message.show("The selected folder does not exist.");
+    }
+
+    // destroy slider if it exists and previously notified ready
+    if (slider && slider.isReady()) {
+      slider.destroy();
+    }
+
+    // if Widget is playing right now, run the timer
+    if (!viewerPaused) {
+      startNoFilesTimer();
     }
   }
 
@@ -89,16 +115,24 @@ RiseVision.ImageFolder = (function (gadgets) {
   function play() {
     viewerPaused = false;
 
-    if (slider && slider.isReady()) {
-      slider.play();
+    if (noFilesFlag) {
+      startNoFilesTimer();
+    } else {
+      if (slider && slider.isReady()) {
+        slider.play();
+      }
     }
   }
 
   function pause() {
     viewerPaused = true;
 
-    if (slider && slider.isReady()) {
-      slider.pause();
+    if (noFilesFlag) {
+      clearNoFilesTimer();
+    } else {
+      if (slider && slider.isReady()) {
+        slider.pause();
+      }
     }
   }
 
