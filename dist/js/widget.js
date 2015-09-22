@@ -170,6 +170,8 @@ RiseVision.ImageFolder = (function (gadgets) {
     message = null,
     prefs = new gadgets.Prefs();
 
+  var viewerPaused = true;
+
   /*
    *  Private Methods
    */
@@ -183,6 +185,8 @@ RiseVision.ImageFolder = (function (gadgets) {
 
     storage = new RiseVision.ImageFolder.Storage(params);
     storage.init();
+
+    ready();
   }
 
   /*
@@ -201,9 +205,6 @@ RiseVision.ImageFolder = (function (gadgets) {
   }
 
   function initSlider(urls) {
-    // in case a message previously shown because of empty folder or folder didn't exist
-    message.hide();
-
     if (slider === null) {
       slider = new RiseVision.ImageFolder.Slider(params);
       slider.init(urls);
@@ -216,6 +217,14 @@ RiseVision.ImageFolder = (function (gadgets) {
 
     if (slider !== null) {
       slider.refresh(urls);
+    }
+  }
+
+  function sliderReady() {
+    message.hide();
+
+    if (!viewerPaused) {
+      slider.play();
     }
   }
 
@@ -237,11 +246,19 @@ RiseVision.ImageFolder = (function (gadgets) {
   }
 
   function play() {
-    slider.play();
+    viewerPaused = false;
+
+    if (slider && slider.isReady()) {
+      slider.play();
+    }
   }
 
   function pause() {
-    slider.pause();
+    viewerPaused = true;
+
+    if (slider && slider.isReady()) {
+      slider.pause();
+    }
   }
 
   function stop() {
@@ -257,6 +274,7 @@ RiseVision.ImageFolder = (function (gadgets) {
     "setParams": setParams,
     "initSlider": initSlider,
     "refreshSlider": refreshSlider,
+    "sliderReady": sliderReady,
     "noFiles": noFiles
   };
 })(gadgets);
@@ -456,7 +474,7 @@ RiseVision.ImageFolder.Slider = function (params) {
       if (isLoading) {
         $api.revpause();
         isLoading = false;
-        RiseVision.ImageFolder.ready();
+        RiseVision.ImageFolder.sliderReady();
       }
     });
 
@@ -476,6 +494,10 @@ RiseVision.ImageFolder.Slider = function (params) {
     });
 
     hideNav();
+  }
+
+  function isReady() {
+    return !isLoading;
   }
 
   function play() {
@@ -499,6 +521,7 @@ RiseVision.ImageFolder.Slider = function (params) {
 
   return {
     "init": init,
+    "isReady": isReady,
     "play": play,
     "pause": pause,
     "refresh": refresh

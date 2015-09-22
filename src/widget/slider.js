@@ -193,7 +193,7 @@ RiseVision.ImageFolder.Slider = function (params) {
       if (isLoading) {
         $api.revpause();
         isLoading = false;
-        RiseVision.ImageFolder.ready();
+        RiseVision.ImageFolder.sliderReady();
       }
     });
 
@@ -213,6 +213,10 @@ RiseVision.ImageFolder.Slider = function (params) {
     });
 
     hideNav();
+  }
+
+  function isReady() {
+    return !isLoading;
   }
 
   function play() {
@@ -236,6 +240,7 @@ RiseVision.ImageFolder.Slider = function (params) {
 
   return {
     "init": init,
+    "isReady": isReady,
     "play": play,
     "pause": pause,
     "refresh": refresh
