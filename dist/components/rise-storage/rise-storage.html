@@ -340,7 +340,12 @@
           this.fire("rise-storage-empty-folder");
         }
         else if (this._noFolderExists(resp.response)) {
-          this.fire("rise-storage-no-folder");
+          if (this.filename) {
+            this.fire("rise-storage-no-file");
+          }
+          else {
+            this.fire("rise-storage-no-folder");
+          }
         }
         else {
           if (this._isLoading) {
