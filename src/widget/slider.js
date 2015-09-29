@@ -164,6 +164,14 @@ RiseVision.ImageFolder.Slider = function (params) {
    *  Public Methods
    *  TODO: Test what happens when folder isn't found.
    */
+  function destroy() {
+    if ($api) {
+      isLastSlide = false;
+      $api.revpause();
+      destroySlider();
+    }
+  }
+
   function init(files) {
     var tpBannerContainer = document.querySelector(".tp-banner-container"),
       fragment = document.createDocumentFragment(),
@@ -193,7 +201,7 @@ RiseVision.ImageFolder.Slider = function (params) {
       if (isLoading) {
         $api.revpause();
         isLoading = false;
-        RiseVision.ImageFolder.ready();
+        RiseVision.ImageFolder.sliderReady();
       }
     });
 
@@ -213,6 +221,10 @@ RiseVision.ImageFolder.Slider = function (params) {
     });
 
     hideNav();
+  }
+
+  function isReady() {
+    return !isLoading;
   }
 
   function play() {
@@ -235,7 +247,9 @@ RiseVision.ImageFolder.Slider = function (params) {
   }
 
   return {
+    "destroy": destroy,
     "init": init,
+    "isReady": isReady,
     "play": play,
     "pause": pause,
     "refresh": refresh

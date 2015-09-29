@@ -1,0 +1,18 @@
+body {
+  /* Display & Box Model */
+  margin: 0;
+  padding: 0;
+}
+
+#messageContainer {
+    display: none; /* hide by default */
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+}
+
+.message {
+    text-align: center;
+    vertical-align: middle;
+}

@@ -167,16 +167,44 @@ RiseVision.ImageFolder = (function (gadgets) {
   var params,
     storage = null,
     slider = null,
+    message = null,
+    noFilesTimer = null,
+    noFilesFlag = false,
     prefs = new gadgets.Prefs();
+
+  var viewerPaused = true;
 
   /*
    *  Private Methods
    */
+  function clearNoFilesTimer() {
+    clearTimeout(noFilesTimer);
+    noFilesTimer = null;
+  }
+
   function init() {
     params.width = prefs.getInt("rsW");
     params.height = prefs.getInt("rsH");
+
+    message = new RiseVision.Common.Message(document.getElementById("container"),
+      document.getElementById("messageContainer"));
+
+    // show wait message while Storage initializes
+    message.show("Please wait while your image is downloaded.");
+
     storage = new RiseVision.ImageFolder.Storage(params);
     storage.init();
+
+    ready();
+  }
+
+  function startNoFilesTimer() {
+    clearNoFilesTimer();
+
+    noFilesTimer = setTimeout(function () {
+      // notify Viewer widget is done
+      done();
+    }, 5000);
   }
 
   /*
@@ -206,6 +234,34 @@ RiseVision.ImageFolder = (function (gadgets) {
     }
   }
 
+  function sliderReady() {
+    message.hide();
+
+    if (!viewerPaused) {
+      slider.play();
+    }
+  }
+
+  function noFiles(type) {
+    noFilesFlag = true;
+
+    if (type === "empty") {
+      message.show("The selected folder does not contain any images.");
+    } else if (type === "noexist") {
+      message.show("The selected folder does not exist.");
+    }
+
+    // destroy slider if it exists and previously notified ready
+    if (slider && slider.isReady()) {
+      slider.destroy();
+    }
+
+    // if Widget is playing right now, run the timer
+    if (!viewerPaused) {
+      startNoFilesTimer();
+    }
+  }
+
   function ready() {
     gadgets.rpc.call("", "rsevent_ready", null, prefs.getString("id"), true,
       true, true, true, true);
@@ -216,11 +272,27 @@ RiseVision.ImageFolder = (function (gadgets) {
   }
 
   function play() {
-    slider.play();
+    viewerPaused = false;
+
+    if (noFilesFlag) {
+      startNoFilesTimer();
+    } else {
+      if (slider && slider.isReady()) {
+        slider.play();
+      }
+    }
   }
 
   function pause() {
-    slider.pause();
+    viewerPaused = true;
+
+    if (noFilesFlag) {
+      clearNoFilesTimer();
+    } else {
+      if (slider && slider.isReady()) {
+        slider.pause();
+      }
+    }
   }
 
   function stop() {
@@ -235,7 +307,9 @@ RiseVision.ImageFolder = (function (gadgets) {
     "stop": stop,
     "setParams": setParams,
     "initSlider": initSlider,
-    "refreshSlider": refreshSlider
+    "refreshSlider": refreshSlider,
+    "sliderReady": sliderReady,
+    "noFiles": noFiles
   };
 })(gadgets);
 
@@ -405,6 +479,14 @@ RiseVision.ImageFolder.Slider = function (params) {
    *  Public Methods
    *  TODO: Test what happens when folder isn't found.
    */
+  function destroy() {
+    if ($api) {
+      isLastSlide = false;
+      $api.revpause();
+      destroySlider();
+    }
+  }
+
   function init(files) {
     var tpBannerContainer = document.querySelector(".tp-banner-container"),
       fragment = document.createDocumentFragment(),
@@ -434,7 +516,7 @@ RiseVision.ImageFolder.Slider = function (params) {
       if (isLoading) {
         $api.revpause();
         isLoading = false;
-        RiseVision.ImageFolder.ready();
+        RiseVision.ImageFolder.sliderReady();
       }
     });
 
@@ -454,6 +536,10 @@ RiseVision.ImageFolder.Slider = function (params) {
     });
 
     hideNav();
+  }
+
+  function isReady() {
+    return !isLoading;
   }
 
   function play() {
@@ -476,10 +562,83 @@ RiseVision.ImageFolder.Slider = function (params) {
   }
 
   return {
+    "destroy": destroy,
     "init": init,
+    "isReady": isReady,
     "play": play,
     "pause": pause,
     "refresh": refresh
+  };
+};
+
+var RiseVision = RiseVision || {};
+RiseVision.Common = RiseVision.Common || {};
+
+RiseVision.Common.Message = function (mainContainer, messageContainer) {
+  "use strict";
+
+  var _active = false;
+
+  function _init() {
+    try {
+      messageContainer.style.height = mainContainer.style.height;
+    } catch (e) {
+      console.warn("Can't initialize Message - ", e.message);
+    }
+  }
+
+  /*
+   *  Public Methods
+   */
+  function hide() {
+    if (_active) {
+      // clear content of message container
+      while (messageContainer.firstChild) {
+        messageContainer.removeChild(messageContainer.firstChild);
+      }
+
+      // hide message container
+      messageContainer.style.display = "none";
+
+      // show main container
+      mainContainer.style.visibility = "visible";
+
+      _active = false;
+    }
+  }
+
+  function show(message) {
+    var fragment = document.createDocumentFragment(),
+      p;
+
+    if (!_active) {
+      // hide main container
+      mainContainer.style.visibility = "hidden";
+
+      messageContainer.style.display = "block";
+
+      // create message element
+      p = document.createElement("p");
+      p.innerHTML = message;
+      p.setAttribute("class", "message");
+      p.style.lineHeight = messageContainer.style.height;
+
+      fragment.appendChild(p);
+      messageContainer.appendChild(fragment);
+
+      _active = true;
+    } else {
+      // message already being shown, update message text
+      p = messageContainer.querySelector(".message");
+      p.innerHTML = message;
+    }
+  }
+
+  _init();
+
+  return {
+    "hide": hide,
+    "show": show
   };
 };
 
@@ -495,12 +654,25 @@ RiseVision.ImageFolder.Storage = function (params) {
     timer = null;
 
   /*
+   *  Private Methods
+   */
+  function _handleEmptyFolder() {
+    RiseVision.ImageFolder.noFiles("empty");
+  }
+
+  function _handleNoFolder() {
+    RiseVision.ImageFolder.noFiles("noexist");
+  }
+
+  /*
    *  Public Methods
    */
   function init() {
     var storage = document.querySelector("rise-storage");
 
     storage.addEventListener("rise-storage-response", handleResponse);
+    storage.addEventListener("rise-storage-empty-folder", _handleEmptyFolder);
+    storage.addEventListener("rise-storage-no-folder", _handleNoFolder);
     storage.setAttribute("companyId", params.storage.companyId);
     storage.setAttribute("folder", params.storage.folder);
     storage.setAttribute("env", config.STORAGE_ENV);
