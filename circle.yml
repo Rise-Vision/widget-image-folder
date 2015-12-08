@@ -1,4 +1,11 @@
 machine:
+  pre:
+    - sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.6 10
+    - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-4.6 10
+    - sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.9 20
+    - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-4.9 20
+  node:
+    version: 4.2.2
   environment:
     awscli: $HOME/aws/bin/aws
 dependencies:
@@ -27,7 +34,7 @@ deployment:
   staging:
     branch: /(feature|fix|chore).*/
     commands:
-      - NODE_ENV=test npm run build
+      - NODE_ENV=prod npm run build
       - echo Deploying version $(grep version package.json |grep -o '[0-9.]*') to $BUCKET_NAME-test
       - $awscli s3 ls s3://$BUCKET_NAME-test || ($awscli s3 mb s3://$BUCKET_NAME-test && $awscli s3api put-bucket-acl --bucket $BUCKET_NAME-test --grant-read 'uri="http://acs.amazonaws.com/groups/global/AllUsers"')
       - $awscli s3 sync ./dist s3://$BUCKET_NAME-test/$(grep version package.json |grep -o '[0-9.]*')/dist --delete --grants read=uri=http://acs.amazonaws.com/groups/global/AllUsers
