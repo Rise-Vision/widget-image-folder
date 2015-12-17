@@ -187,6 +187,7 @@ RiseVision.ImageFolder.Slider = function (params) {
 
     addSlides();
 
+    isLoading = true;
     $api = $(".tp-banner").revolution({
       "hideThumbs": 0,
       "hideTimerBar": "on",
@@ -198,11 +199,9 @@ RiseVision.ImageFolder.Slider = function (params) {
 
     $api.on("revolution.slide.onloaded", function() {
       // Pause slideshow since it will autoplay and this is not configurable.
-      if (isLoading) {
-        $api.revpause();
-        isLoading = false;
-        RiseVision.ImageFolder.sliderReady();
-      }
+      $api.revpause();
+      isLoading = false;
+      RiseVision.ImageFolder.sliderReady();
     });
 
     $api.on("revolution.slide.onchange", function (e, data) {
